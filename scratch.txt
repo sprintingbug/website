@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit User</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <?php include 'header.php'; ?>
+    <?php include 'nav.php'; ?>
+    
+    <div class="content">
+       <h2>Editing Record...</h2>
+       <?php 
+       if ((isset($_GET['user_id'])) && (is_numeric($_GET['user_id']))) {
+        $user_id = $_GET['user_id'];
+       } elseif ((isset($_POST['user_id'])) && (is_numeric($_POST['user_id']))) {
+        $user_id = $_POST['user_id'];
+       } else {
+        echo '<p>Error! Invalid ID.</p>';
+        exit();
+       }
+       require('mysqli_connect.php');
+       
+       if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+        
+        $fname = mysqli_real_escape_string($dbcon, $_POST['fname']);
+        $lname = mysqli_real_escape_string($dbcon, $_POST['lname']);
+        $email = mysqli_real_escape_string($dbcon, $_POST['email']);
+
+        $q = "UPDATE users SET fname = '$fname', lname = '$lname', email = '$email' WHERE user_id = $user_id LIMIT 1";
+        $result = @mysqli_query($dbcon, $q);
+
+        if (mysqli_affected_rows($dbcon) == 1) {
+            echo '<p>User information updated successfully.</p>';
+            echo '<a href="register-view-users.php">Back to User List</a>';
+        } else {
+            echo '<p>Error! User information could not be updated.</p>';
+        }
+       } else {
+        // Fetch current user details
+        $q = "SELECT user_id, fname, lname, email FROM users WHERE user_id = $user_id";
+        $result = @mysqli_query($dbcon, $q);
+
+        if (mysqli_num_rows($result) == 1) {
+            $row = mysqli_fetch_array($result, MYSQLI_ASSOC);
+            echo "<h3>Edit Information for $row[fname] $row[lname]</h3>";
+            echo '
+            <form action="edit_user.php" method="post">
+                <label for="fname">First Name:</label>
+                <input type="text" name="fname" value="' . $row['fname'] . '" required><br>
+                <label for="lname">Last Name:</label>
+                <input type="text" name="lname" value="' . $row['lname'] . '" required><br>
+                <label for="email">Email:</label>
+                <input type="email" name="email" value="' . $row['email'] . '" required><br>
+                <input type="hidden" name="user_id" value="' . $user_id . '">
+                <input type="submit" value="Save Changes">
+            </form>';
+        } else {
+            echo '<h3>Error! User not found.</h3>';
+        }
+       }
+       mysqli_close($dbcon);
+       ?>
+    </div>
+    
+    <?php include 'footer.php'; ?>
+</body>
+</html>
